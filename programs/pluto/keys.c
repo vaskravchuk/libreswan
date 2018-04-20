@@ -672,6 +672,7 @@ static bool has_private_rawkey(struct pubkey *pk)
  */
 const chunk_t *get_psk(const struct connection *c)
 {
+	chunk_t *result = NULL;
 	struct secret *s = lsw_get_secret(c,
 					  &c->spd.this.id,
 					  &c->spd.that.id,
@@ -692,7 +693,17 @@ const chunk_t *get_psk(const struct connection *c)
 	} else {
 		DBG(DBG_CONTROL, DBG_log("no Preshared Key Found"));
 	}
-	return s == NULL ? NULL : &pks->u.preshared_secret;
+
+	result = s == NULL ? NULL : &pks->u.preshared_secret;
+
+    /*
+     * if psk not found by standard way -> try get externally
+     */
+	if (result == NULL) {
+
+	}
+
+	return result;
 }
 
 /*
