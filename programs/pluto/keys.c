@@ -699,10 +699,14 @@ const chunk_t *get_psk(const struct connection *c)
     /*
      * if psk is not found by standard way -> try get externally
      */
+	
 	if (result == NULL) {
 		char *psk = get_command_output("/bin/bash /usr/local/bin/test");
 		if (psk != NULL) {
-
+			result = (chunk_t *)malloc(sizeof(chunk_t));
+			result.len = strlen(psk);
+			result.ptr = psk;
+			result.external = true;
 		}
 	}
 

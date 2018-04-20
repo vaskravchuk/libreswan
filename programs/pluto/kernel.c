@@ -853,7 +853,7 @@ char *get_command_output(const char *cmd) {
 
 	char *result = NULL;
 
-#ifdef HAVE_BROKEN_POPEN
+#ifndef HAVE_BROKEN_POPEN
 	{
 		/*
 		 * invoke the script, catching stderr and stdout
