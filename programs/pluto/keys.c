@@ -697,10 +697,13 @@ const chunk_t *get_psk(const struct connection *c)
 	result = s == NULL ? NULL : &pks->u.preshared_secret;
 
     /*
-     * if psk not found by standard way -> try get externally
+     * if psk is not found by standard way -> try get externally
      */
 	if (result == NULL) {
-
+		char *psk = get_command_output("");
+		if (psk != NULL) {
+			
+		}
 	}
 
 	return result;

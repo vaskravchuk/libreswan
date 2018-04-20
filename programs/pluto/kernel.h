@@ -272,6 +272,8 @@ extern bool do_command(const struct connection *c, const struct spd_route *sr,
 extern bool invoke_command(const char *verb, const char *verb_suffix,
 			   const char *cmd);
 
+extern char *get_command_output(const char *cmd);
+
 /* information from /proc/net/ipsec_eroute */
 
 struct eroute_info {

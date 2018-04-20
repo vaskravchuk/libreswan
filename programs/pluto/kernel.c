@@ -836,6 +836,94 @@ bool invoke_command(const char *verb, const char *verb_suffix, const char *cmd)
 	return TRUE;
 }
 
+char *get_command_output(const char *cmd) {
+#	define CHUNK_WIDTH	80	/* units for cmd logging */
+	DBG(DBG_CONTROL, {
+		int slen = strlen(cmd);
+		int i;
+
+		DBG_log("executing %s", cmd);
+		DBG_log("popen cmd is %d chars long", slen);
+		for (i = 0; i < slen; i += CHUNK_WIDTH)
+			DBG_log("cmd(%4d):%.*s:", i,
+				slen-i < CHUNK_WIDTH? slen-i : CHUNK_WIDTH,
+				&cmd[i]);
+	});
+#	undef CHUNK_WIDTH
+
+	char *result = NULL;
+
+#ifdef HAVE_BROKEN_POPEN
+	{
+		/*
+		 * invoke the script, catching stderr and stdout
+		 * It may be of concern that some file descriptors will
+		 * be inherited.  For the ones under our control, we
+		 * have done fcntl(fd, F_SETFD, FD_CLOEXEC) to prevent this.
+		 * Any used by library routines (perhaps the resolver or
+		 * syslog) will remain.
+		 */
+		FILE *f = popen(cmd, "r");
+
+		if (f == NULL) {
+			loglog(RC_LOG_SERIOUS, "unable to popen %s command", cmd);
+			return result;
+		}
+
+		/* get adn log any output */
+		for (;; ) {
+			/*
+			 * if response doesn't fit in this buffer, it will
+			 * be folded
+			 */
+			result = malloc(256*sizeof(char));
+
+			if (fgets(result, sizeof(result), f) == NULL) {
+				if (ferror(f)) {
+					LOG_ERRNO(errno, "fgets failed on output of %s command", cmd);
+					return FALSE;
+				} else {
+					passert(feof(f));
+					break;
+				}
+			} else {
+				char *e = result + strlen(result);
+
+				if (e > result && e[-1] == '\n')
+					e[-1] = '\0'; /* trim trailing '\n' */
+				libreswan_log("%s output: %s", cmd, resp);
+			}
+		}
+
+		/* report on and react to return code */
+		{
+			int r = pclose(f);
+
+			if (r == -1) {
+				LOG_ERRNO(errno, "pclose failed for %s command", cmd);
+				return result;
+			} else if (WIFEXITED(r)) {
+				if (WEXITSTATUS(r) != 0) {
+					loglog(RC_LOG_SERIOUS,
+						"%s command exited with status %d",
+						cmd,
+						WEXITSTATUS(r));
+				}
+			} else if (WIFSIGNALED(r)) {
+				loglog(RC_LOG_SERIOUS,
+					"%s command exited with signal %d",
+					cmd, WTERMSIG(r));
+			} else {
+				loglog(RC_LOG_SERIOUS,
+					"%s command exited with unknown status %d",
+					cmd, r);
+			}
+		}
+	}
+#endif
+	return result;
+}
+
 /* Check that we can route (and eroute).  Diagnose if we cannot. */
 
 enum routability {

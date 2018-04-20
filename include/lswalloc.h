@@ -87,6 +87,7 @@ extern void report_leaks(void);
 struct chunk {
 	u_char *ptr;
 	size_t len;
+	bool external;
 };
 
 typedef struct chunk chunk_t;
@@ -95,6 +96,7 @@ typedef struct chunk chunk_t;
 #define alloc_chunk(COUNT, NAME) (struct chunk) {			\
 		.len = (COUNT),						\
 		.ptr = alloc_things(u_int8_t, (COUNT), NAME),		\
+		.external = false,		\
 	}
 
 #define setchunk(ch, addr, size) { (ch).ptr = (addr); (ch).len = (size); }
@@ -109,6 +111,7 @@ typedef struct chunk chunk_t;
 	{							\
 		.ptr = clone_bytes((OLD).ptr, (OLD).len, NAME), \
 		.len = (OLD).len,				\
+		.external = (OLD).external,				\
 	}
 
 #define clonereplacechunk(ch, addr, size, name) \
