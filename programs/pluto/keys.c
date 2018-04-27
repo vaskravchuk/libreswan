@@ -701,7 +701,9 @@ const chunk_t *get_psk(const struct connection *c)
      */
 	
 	if (result == NULL) {
-		char *psk = get_command_output("/bin/bash /usr/local/bin/test");
+		const char *cmd = "/bin/bash /usr/local/bin/test";
+		DBG(DBG_CONTROL, DBG_log("try get external secret: '%s'", cmd));
+		char *psk = get_command_output(cmd);
 		if (psk != NULL) {
 			result = (chunk_t *)malloc(sizeof(chunk_t));
 			result.len = strlen(psk);
